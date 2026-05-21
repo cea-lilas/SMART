@@ -40,8 +40,8 @@ class MassApertureMap(ABC):
         return lambda r: (r**2 / (4 * np.pi *(theta)**4)) * np.exp(-r**2 / (2. * (theta)**2))
 
     
-    def expand_mask(self, mask, radius_rad, vecs):
-        mask_hp = mask.copy()
+    def expand_mask(self, radius_rad, vecs):
+        mask_hp = self.mask.copy()
         masked_pixels = np.nonzero(self.mask)[0]
         print('Number of masked pixels =', len(masked_pixels))
         for pix in masked_pixels:
@@ -52,8 +52,8 @@ class MassApertureMap(ABC):
         ind = np.nonzero(mask_hp)[0]
         return mask_hp, ind
 
-    def apply_filter(self, filter, center, gamma1, gamma2, ra, dec, gamma1_sq=None, gamma2_sq=None):
-        
+    def apply_filter(self, filter, i, vecs, radius_rad, **kwargs):
+        center, gamma1, gamma2, ra, dec, gamma1_sq, gamma2_sq= self.query_neighbors(i, vecs, radius_rad, **kwargs)
         center_ra, center_dec = center
         
         r = np.arccos(np.sin(dec)*np.sin(center_dec) + np.cos(dec)*np.cos(center_dec) *np.cos(ra-center_ra))
@@ -76,26 +76,6 @@ class MassApertureMap(ABC):
         map_vnoise_i = 1/2* np.sum((gamma1_sq + gamma2_sq) * Q**2)
         return mapE_i, mapB_i, map_vnoise_i
 
-    def query_neighbors(self, neighbors):
-            gamma1_j = self.gamma1[neighbors]
-            gamma2_j = self.gamma2[neighbors]
-
-            if self._barycenters:
-                ra_j = self.ra_c[neighbors]
-                dec_j = self.dec_c[neighbors]
-            else:
-                ra_j = self.ra[neighbors]
-                dec_j = self.dec[neighbors]
-
-            if self._squares:
-                gamma1_sq_j = self.gamma1_sq[neighbors]
-                gamma2_sq_j = self.gamma2_sq[neighbors]
-            else:
-                gamma1_sq_j = None
-                gamma2_sq_j = None
-            
-            return ra_j, dec_j, gamma1_j, gamma2_j, gamma1_sq_j, gamma2_sq_j
-
     def get_healpix_ra_dec(self):
         theta, ra = hp.pix2ang(self.nside, np.arange(self._npix), lonlat=False)
         dec = np.pi/2 - theta
@@ -105,5 +85,39 @@ class MassApertureMap(ABC):
         return np.array(hp.pix2vec(self.nside, np.arange(self._npix)))
     
     @abstractmethod
-    def get_mass_aperture(self, filter, r_theta_cut):
+    def query_neighbors(self, i, vecs, radius_rad, **kwargs):
         pass
+    
+    @abstractmethod
+    def initialise_mass_aperture(self, shear_catalog=None, SUM = False, return_squares=True, return_barycenters=False):
+        pass
+    
+    def get_mass_aperture(self, r_theta_cut, filter=None):
+        noise, kwargs = self.initialise_mass_aperture()
+        
+        if filter is None:
+            filter = self.get_jarvis(r_theta_cut)
+        mapE = np.zeros(self._npix)
+        mapB = np.zeros(self._npix)
+        mask_hp = np.zeros(self._npix)
+        if noise:
+            map_vnoise = np.zeros(self._npix)
+        
+        radius_rad = r_theta_cut * self._psize_rad
+
+        pix_vec = self.get_healpix_vec()
+        
+        mask_hp, ind = self.expand_mask(radius_rad, pix_vec)
+        
+        npix_nzero = np.size(ind)
+        print("npix_zero = ", npix_nzero)
+        for i in ind:
+            if noise:
+                mapE[i], mapB[i], map_vnoise[i] = self.apply_filter(filter, i, pix_vec, radius_rad, **kwargs)
+            else:
+                mapE[i], mapB[i] = self.apply_filter(filter, i, pix_vec, radius_rad, **kwargs)
+        
+        if noise:
+            return mapE, mapB, map_vnoise, mask_hp
+        else:
+            return mapE, mapB, mask_hp

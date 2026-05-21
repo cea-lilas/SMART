@@ -22,49 +22,40 @@ class BinCatMassAperture(MassApertureMap):
         all_gals[:, 0] = ra[pixel_order]
         all_gals[:, 1] = dec[pixel_order]
         
-        mask = (ngal_pix > 0)
+        self.mask = (ngal_pix > 0)
             
         all_gals[:, 2] = shear_catalog.gamma1[pixel_order] * shear_catalog.weight[pixel_order]
         all_gals[:, 3] = shear_catalog.gamma2[pixel_order] * shear_catalog.weight[pixel_order]
         
-        return all_gals, offsets, mask
+        return all_gals, offsets
     
-    def get_mass_aperture(self, shear_catalog, filter, r_theta_cut):
+    def query_neighbors(self, i, vecs, radius_rad, **kwargs):
+        all_gals = kwargs.get('all_gals')
+        offsets = kwargs.get('offsets')
+        ra = kwargs.get('ra')
+        dec = kwargs.get('dec')
+        neighbors = hp.query_disc(self.nside, vecs[:, i], radius_rad)
+            
+        neighbor_lenghts = offsets[neighbors+1] - offsets[neighbors]
+        neighbor_data = np.empty((sum(neighbor_lenghts), 4), dtype=all_gals.dtype)
+        
+        pos = 0
+        for n in range(len(neighbors)):
+            neighbor_data[pos: pos + neighbor_lenghts[n], :] = all_gals[offsets[neighbors[n]]: offsets[neighbors[n]+1], :]
+            pos += neighbor_lenghts[n]
+        
+        ra_j = neighbor_data[:, 0]
+        dec_j = neighbor_data[:, 1]
+        gamma1_j = neighbor_data[:, 2]
+        gamma2_j = neighbor_data[:, 3]
+        gamma1_j_sq = gamma1_j**2
+        gamma2_j_sq = gamma2_j**2
+        
+        center = (ra[i], dec[i])
+        return center, ra_j, dec_j, gamma1_j, gamma2_j, gamma1_j_sq, gamma2_j_sq
+
+    def initialize_mass_aperture(self, shear_catalog=None, SUM = False, return_squares=True, return_barycenters=False):
         ra, dec = self.get_healpix_ra_dec()
-        
-        all_gals, offsets, mask = self.bin_catalog(shear_catalog)
-        
-        if filter is None:
-            filter = self.get_jarvis(r_theta_cut)
-        radius_rad = r_theta_cut * self._psize_rad
-        mapE = np.zeros(self._npix)
-        mapB = np.zeros(self._npix)
-        map_vnoise = np.zeros(self._npix)
-        
-        vecs = self.get_healpix_vec()
-        
-        mask_hp, ind = self.expand_mask(mask, radius_rad, vecs)
-        
-        for i in ind:
-            neighbors = hp.query_disc(self.nside, vecs[:, i], radius_rad)
-            
-            neighbor_lenghts = offsets[neighbors+1] - offsets[neighbors]
-            neighbor_data = np.empty((sum(neighbor_lenghts), 4), dtype=all_gals.dtype)
-            
-            pos = 0
-            for n in range(len(neighbors)):
-                neighbor_data[pos: pos + neighbor_lenghts[n], :] = all_gals[offsets[neighbors[n]]: offsets[neighbors[n]+1], :]
-                pos += neighbor_lenghts[n]
-            
-            ra_j = neighbor_data[:, 0]
-            dec_j = neighbor_data[:, 1]
-            gamma1_j = neighbor_data[:, 2]
-            gamma2_j = neighbor_data[:, 3]
-            gamma1_j_sq = gamma1_j**2
-            gamma2_j_sq = gamma2_j**2
-            
-            center = (ra[i], dec[i])
-            
-            mapE[i], mapB[i], map_vnoise[i] = self.apply_filter(filter, center, gamma1_j, gamma2_j, ra_j, dec_j, gamma1_sq=gamma1_j_sq, gamma2_sq=gamma2_j_sq)
-            
-        return mapE, mapB, map_vnoise, mask_hp
+        all_gals, offsets= self.bin_catalog(shear_catalog)
+
+        return True, {"all_gals": all_gals, "offsets": offsets, "ra": ra, "dec": dec}

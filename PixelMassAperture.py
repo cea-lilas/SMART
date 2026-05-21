@@ -61,31 +61,33 @@ class PixelMassAperture(MassApertureMap):
     def pixelised_shear(self, shear_catalog=None, SUM = False, return_squares=True, return_barycenters=False):
         self.check_pixelisation(shear_catalog, SUM, return_squares, return_barycenters)
         return self.ra, self.dec, self.gamma1, self.gamma2
-    
-    def get_mass_aperture(self, filter, r_theta_cut, shear_catalog=None, SUM = False, return_squares=True, return_barycenters=False):
-        self.check_pixelisation(shear_catalog, SUM, return_squares, return_barycenters)
-        
-        if filter is None:
-            filter = self.get_jarvis(r_theta_cut)
 
-        radius_rad = r_theta_cut * self._psize_rad
-        
-        mapE = np.zeros(self._npix)
-        mapB = np.zeros(self._npix)
-        map_vnoise = np.zeros(self._npix)
-            
-        vecs = self.get_healpix_vec()
-            
-        mask_hp, ind = self.expand_mask(self.mask, radius_rad, vecs)
-        
-        for i in ind:
+    def query_neighbors(self, i, vecs, radius_rad):
             # Select the healpix pixels iself.nside the aperture of radius_rad
             neighbors = hp.query_disc(self.nside, vecs[:, i], radius_rad)
             neighbors = neighbors[neighbors != i]
+            
             center = (self.ra[i], self.dec[i])
             
-            ra_j, dec_j, gamma1_j, gamma2_j, gamma1_sq_j, gamma2_sq_j = self.query_neighbors(neighbors)
+            gamma1_j = self.gamma1[neighbors]
+            gamma2_j = self.gamma2[neighbors]
 
-            mapE[i], mapB[i], map_vnoise[i] = self.apply_filter(filter, center, gamma1_j, gamma2_j, ra_j, dec_j, gamma1_sq_j, gamma2_sq_j)
+            if self._barycenters:
+                ra_j = self.ra_c[neighbors]
+                dec_j = self.dec_c[neighbors]
+            else:
+                ra_j = self.ra[neighbors]
+                dec_j = self.dec[neighbors]
 
-        return mapE, mapB, map_vnoise, mask_hp
+            if self._squares:
+                gamma1_sq_j = self.gamma1_sq[neighbors]
+                gamma2_sq_j = self.gamma2_sq[neighbors]
+            else:
+                gamma1_sq_j = None
+                gamma2_sq_j = None
+            
+            return center, ra_j, dec_j, gamma1_j, gamma2_j, gamma1_sq_j, gamma2_sq_j
+
+    def initialize_mass_aperture(self, shear_catalog=None, SUM = False, return_squares=True, return_barycenters=False):
+        self.check_pixelisation(shear_catalog, SUM, return_squares, return_barycenters)
+        return self._squares, {}
