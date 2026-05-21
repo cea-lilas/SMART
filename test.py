@@ -1,4 +1,4 @@
-from package import *
+from smart import *
 from astropy.io import fits
 from os import chdir
 import healpy as hp

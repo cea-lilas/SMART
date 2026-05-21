@@ -1,7 +1,7 @@
 import numpy as np
 import healpy as hp
 from ..ShearCatalog import ShearCatalog
-from .MassAperture import MassApertureMap, polar_angle
+from .MassAperture import MassApertureMap
 from scipy.spatial import cKDTree
 
 class FullCatMassAperture(MassApertureMap):
