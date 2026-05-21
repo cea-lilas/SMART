@@ -1,13 +1,13 @@
 import numpy as np
 import healpy as hp
-from ShearCatalog import ShearCatalog
-from MassAperture import MassApertureMap, polar_angle
+from .ShearCatalog import ShearCatalog
+from .MassAperture import MassApertureMap, polar_angle
+from time import time
 
 class PixelMassAperture(MassApertureMap):
-    def __init__(self, nside=2048):
-        super().__init__(nside)
+    def __init__(self, nside=2048, verbosity=1):
+        super().__init__(nside, verbosity)
         self._barycenters = False
-        self._squares = False
         self._done_pixelisation = False
     
     def pixelise_catalog(self, shear_catalog : ShearCatalog, SUM = False, return_squares=True, return_barycenters=False):
@@ -19,11 +19,12 @@ class PixelMassAperture(MassApertureMap):
             self.nside (int): healpix self.nside parameter  
             SUM (Boolean, optional): If True, group the pixels by summing galaxy shears, averages them otherwise. Defaults to False.
         """
-
-        pix_ind = hp.ang2pix(self.nside, shear_catalog.ra, shear_catalog.dec, lonlat=True, nest=False)
+        self.verbose_print(1, f"Pixelising catalog : npix = {self._npix}")
+        start_time = time()
+        pix_ind = hp.ang2pix(self.nside, shear_catalog.ra, shear_catalog.dec, lonlat=True)
         ng = np.bincount(pix_ind, minlength=self._npix)
         
-        shear_catalog.normalise_weights(pix_ind, ng, SUM=SUM)
+        shear_catalog.normalise_weights(self._npix, pix_ind, ng, SUM=SUM)
         
         self.gamma1 = np.zeros(self._npix, dtype=np.float64)
         self.gamma2 = np.zeros(self._npix, dtype=np.float64)
@@ -51,7 +52,8 @@ class PixelMassAperture(MassApertureMap):
             
         self.ra, self.dec = self.get_healpix_ra_dec()
         self._done_pixelisation = True
-    
+        self.verbose_print(2, f"Pixelisation done in {time() - start_time:.2f} seconds.")
+
     def check_pixelisation(self, shear_catalog, SUM, return_squares, return_barycenters):
         if not self._done_pixelisation:
             if shear_catalog is None:
@@ -63,31 +65,31 @@ class PixelMassAperture(MassApertureMap):
         return self.ra, self.dec, self.gamma1, self.gamma2
 
     def query_neighbors(self, i, vecs, radius_rad):
-            # Select the healpix pixels iself.nside the aperture of radius_rad
-            neighbors = hp.query_disc(self.nside, vecs[:, i], radius_rad)
-            neighbors = neighbors[neighbors != i]
-            
-            center = (self.ra[i], self.dec[i])
-            
-            gamma1_j = self.gamma1[neighbors]
-            gamma2_j = self.gamma2[neighbors]
+        # Select the healpix pixels iself.nside the aperture of radius_rad
+        neighbors = hp.query_disc(self.nside, vecs[:, i], radius_rad)
+        neighbors = neighbors[neighbors != i]
+        
+        center = (self.ra[i], self.dec[i])
+        
+        gamma1_j = self.gamma1[neighbors]
+        gamma2_j = self.gamma2[neighbors]
+        
+        if self._barycenters:
+            ra_j = self.ra_c[neighbors]
+            dec_j = self.dec_c[neighbors]
+        else:
+            ra_j = self.ra[neighbors]
+            dec_j = self.dec[neighbors]
 
-            if self._barycenters:
-                ra_j = self.ra_c[neighbors]
-                dec_j = self.dec_c[neighbors]
-            else:
-                ra_j = self.ra[neighbors]
-                dec_j = self.dec[neighbors]
+        if self._squares:
+            gamma1_sq_j = self.gamma1_sq[neighbors]
+            gamma2_sq_j = self.gamma2_sq[neighbors]
+        else:
+            gamma1_sq_j = None
+            gamma2_sq_j = None
+        
+        return center, ra_j, dec_j, gamma1_j, gamma2_j, gamma1_sq_j, gamma2_sq_j
 
-            if self._squares:
-                gamma1_sq_j = self.gamma1_sq[neighbors]
-                gamma2_sq_j = self.gamma2_sq[neighbors]
-            else:
-                gamma1_sq_j = None
-                gamma2_sq_j = None
-            
-            return center, ra_j, dec_j, gamma1_j, gamma2_j, gamma1_sq_j, gamma2_sq_j
-
-    def initialize_mass_aperture(self, shear_catalog=None, SUM = False, return_squares=True, return_barycenters=False):
+    def initialise_mass_aperture(self, shear_catalog=None, SUM = False, return_squares=True, return_barycenters=False):
         self.check_pixelisation(shear_catalog, SUM, return_squares, return_barycenters)
-        return self._squares, {}
+        return {}

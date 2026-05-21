@@ -1,12 +1,12 @@
 import numpy as np
 import healpy as hp
-from ShearCatalog import ShearCatalog
-from MassAperture import MassApertureMap, polar_angle
+from .ShearCatalog import ShearCatalog
+from .MassAperture import MassApertureMap, polar_angle
 from scipy.spatial import cKDTree
 
-class BinCatMassAperture(MassApertureMap):
-    def __init__(self, nside=2048):
-        super().__init__(nside)
+class FullCatMassAperture(MassApertureMap):
+    def __init__(self, nside=2048, verbosity=1):
+        super().__init__(nside, verbosity)
     
     def query_neighbors(self, i, vecs, radius_rad, **kwargs):
         shear_catalog = kwargs.get('shear_catalog')
@@ -19,18 +19,21 @@ class BinCatMassAperture(MassApertureMap):
         
         g1_j = g1[neighbors]
         g2_j = g2[neighbors]
-        ra_j = shear_catalog.ra[neighbors]
-        dec_j = shear_catalog.dec[neighbors]
+        ra_j = np.radians(shear_catalog.ra[neighbors])
+        dec_j = np.radians(shear_catalog.dec[neighbors])
+        
+        if self._squares:
+            g1_j_sq = g1_j**2
+            g2_j_sq = g2_j**2
+            return center, ra_j, dec_j, g1_j, g2_j, g1_j_sq, g2_j_sq
         
         return center, ra_j, dec_j, g1_j, g2_j
     
-    def initialize_mass_aperture(self, shear_catalog=None, SUM = False, return_squares=True, return_barycenters=False):
-        self.check_pixelisation(shear_catalog, SUM, return_squares, return_barycenters)
-        
+    def initialise_mass_aperture(self, shear_catalog : ShearCatalog =None, SUM = False, return_squares=False, return_barycenters=False):        
         pix_ind = hp.ang2pix(self.nside, shear_catalog.ra, shear_catalog.dec, lonlat = True)
         
         ng = np.bincount(pix_ind, minlength=self._npix)
-        shear_catalog.normalise_weights(pix_ind, ng, SUM=False)
+        shear_catalog.normalise_weights(self._npix, pix_ind, ng, SUM=False)
         g1 = shear_catalog.gamma1*shear_catalog.weight
         g2 = shear_catalog.gamma2*shear_catalog.weight
         
@@ -39,4 +42,4 @@ class BinCatMassAperture(MassApertureMap):
         vec = hp.ang2vec(shear_catalog.ra, shear_catalog.dec, lonlat = True)
         
         galaxy_KDtree = cKDTree(vec)
-        return False, {"kdtree":galaxy_KDtree, "shear_catalog":shear_catalog, "g1":g1, "g2":g2}
+        return {"kdtree":galaxy_KDtree, "shear_catalog":shear_catalog, "g1":g1, "g2":g2}

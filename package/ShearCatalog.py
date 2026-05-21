@@ -27,11 +27,11 @@ class ShearCatalog():
         self.ngal = np.shape(self.ra)[0]
         return self
     
-    def normalise_weights(self, npix_ind, ng, SUM=False):
-        ng_weight = np.zeros(self._npix, dtype=np.float64)
+    def normalise_weights(self, npix, npix_ind, ng, SUM=False):
+        ng_weight = np.zeros(npix, dtype=np.float64)
         np.add.at(ng_weight, npix_ind, self.weight)
         if SUM:
             ng_weight = np.mean(ng_weight[ng > 0])
         else:
-            ng_weight[ng == 0] = 1
-        self.weight /= ng_weight
+            ng_weight[ng_weight == 0] = 1
+        self.weight /= ng_weight[npix_ind]
