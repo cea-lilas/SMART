@@ -1,7 +1,7 @@
 import numpy as np
 import healpy as hp
-from .ShearCatalog import ShearCatalog
-from .filters import *
+from ..ShearCatalog import ShearCatalog
+from ..filters import *
 from abc import ABC, abstractmethod
 from astropy.table import Table
 from time import time

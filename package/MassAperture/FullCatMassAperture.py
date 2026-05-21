@@ -1,6 +1,6 @@
 import numpy as np
 import healpy as hp
-from .ShearCatalog import ShearCatalog
+from ..ShearCatalog import ShearCatalog
 from .MassAperture import MassApertureMap, polar_angle
 from scipy.spatial import cKDTree
 

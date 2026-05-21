@@ -7,9 +7,11 @@ import matplotlib.pyplot as plt
 chdir("/local/home/ib286534/Documents/Catalogues/")
 
 # data = fits.getdata("RR2_filtered.fits")
+# columns = ["RA", "Dec", "e_1", "e_2", "weight"]
 data = fits.getdata("hsc_catalogue_filtered.fits")
+columns = ["SHE_RA", "SHE_DEC", "SHE_E1_CORRECTED", "SHE_E2_CORRECTED", "SHE_WEIGHT"]
 
-shear_catalog = ShearCatalog(data, columns=["RA", "Dec", "e_1", "e_2", "weight"], gamma2_sign=1)
+shear_catalog = ShearCatalog(data, columns=columns, gamma2_sign=1)
 mass_aperture = PixelMassAperture(nside=2048, verbosity=2)
 mapE, mapB, mask = mass_aperture.get_mass_aperture(3, shear_catalog=shear_catalog, return_noise=False)
 hp.mollview(mapE, cmap="gist_stern")
