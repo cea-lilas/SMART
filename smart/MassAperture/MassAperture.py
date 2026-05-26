@@ -5,6 +5,7 @@ from ..filters import *
 from abc import ABC, abstractmethod
 from astropy.table import Table
 from time import time
+from tqdm import tqdm
 
 def polar_angle(dec_i, ra_i, dec_j, ra_j):
     """
@@ -128,7 +129,7 @@ class MassApertureMap(ABC):
         
         mask_hp, ind = self.expand_mask(radius_rad, pix_vec)
         
-        for i in ind:
+        for i in tqdm(ind, desc="Applying filter", unit="pixels", mininterval=1):
             if self._squares:
                 mapE[i], mapB[i], map_vnoise[i] = self.apply_filter(filter, i, pix_vec, radius_rad, **kwargs)
             else:
