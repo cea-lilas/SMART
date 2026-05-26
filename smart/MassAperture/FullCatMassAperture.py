@@ -22,12 +22,14 @@ class FullCatMassAperture(MassApertureMap):
         ra_j = np.radians(shear_catalog.ra[neighbors])
         dec_j = np.radians(shear_catalog.dec[neighbors])
         
+        g1_j_sq = None
+        g2_j_sq = None
+        
         if self._squares:
             g1_j_sq = g1_j**2
             g2_j_sq = g2_j**2
-            return center, ra_j, dec_j, g1_j, g2_j, g1_j_sq, g2_j_sq
         
-        return center, ra_j, dec_j, g1_j, g2_j
+        return center, ra_j, dec_j, g1_j, g2_j, g1_j_sq, g2_j_sq
     
     def initialise_mass_aperture(self, shear_catalog : ShearCatalog =None, SUM = False, return_squares=False, return_barycenters=False):        
         pix_ind = hp.ang2pix(self.nside, shear_catalog.ra, shear_catalog.dec, lonlat = True)
