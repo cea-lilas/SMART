@@ -71,7 +71,7 @@ class MassApertureMap(ABC):
         if self.verbosity >= verbosity:
             print(*args)
 
-    def get_filter_by_name(self, name, theta=None):
+    def get_filter_by_name(self, name, theta=None, x_c=0.1):
         """
         Retrives an implemented filter function by its name.
 
@@ -81,11 +81,16 @@ class MassApertureMap(ABC):
             theta : float, optional
                 Scale parameter for the filter (if applicable).
         """
+        if theta is None:
+            theta = 2.3 * (self.nside // 2048)
+
         match name:
-            case "jarvis":
-                if theta is None:
-                    theta = 2.3 * (self.nside // 2048)
+            case "J04":
                 return get_jarvis(theta)
+            case "tanh":
+                return get_tanh(theta, x_c)
+            case "M18":
+                return get_miyazaki(theta)
             case _:
                 raise ValueError(
                     f"Filter {name} not found. Available filters: 'jarvis'.")
@@ -209,7 +214,7 @@ class MassApertureMap(ABC):
     def get_mass_aperture(
             self,
             r_theta_cut,
-            filter="jarvis",
+            filter="J04",
             shear_catalog: ShearCatalog = None,
             SUM=False,
             return_noise=True,
@@ -240,7 +245,7 @@ class MassApertureMap(ABC):
         self.verbose_print(2, "Starting mass aperture computation...")
 
         if isinstance(filter, str):
-            filter = self.get_filter_by_name("jarvis")
+            filter = self.get_filter_by_name("J04")
         if not callable(filter):
             raise ValueError(
                 "Filter must be a valid filter name or a callable function taking one argument r.")
