@@ -64,24 +64,15 @@ class ShearCatalog():
         self.ngal = np.shape(self.ra)[0]
         return self
 
-    def normalise_weights(self, npix, npix_ind, ng, SUM=False):
+    def normalise_weights(self, pix_ind, ng_weight):
         """
-        Normalises the shear weights of the catalog by pixel. If SUM is True, normalises by the average weight per galaxy over the whole map, otherwise normalises by the average weight per galaxy in each pixel.
+        Normalises the shear weights of the catalog by pixel.
 
         Args:
             npix : int
                 Total number of pixels in the map.
-            npix_ind : np.ndarray
+            pix_ind : np.ndarray
                 Array of pixel indices corresponding to each galaxy in the catalog.
-            ng : np.ndarray
-                Array of the number of galaxies in each pixel.
-            SUM : Boolean, optional
-                If True, normalises by the average weight per galaxy over the whole map, otherwise normalises by the average weight per galaxy in each pixel. Defaults to False.
         """
-        ng_weight = np.zeros(npix, dtype=np.float64)
-        np.add.at(ng_weight, npix_ind, self.weight)
-        if SUM:
-            ng_weight = np.mean(ng_weight[ng > 0])
-        else:
-            ng_weight[ng_weight == 0] = 1
-        self.weight /= ng_weight[npix_ind]
+        ng_weight[ng_weight == 0] = 1
+        self.weight /= ng_weight[pix_ind]

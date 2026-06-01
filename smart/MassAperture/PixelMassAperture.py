@@ -26,6 +26,7 @@ class PixelMassAperture(MassApertureMap):
             SUM : Boolean, optional
                 If True, group the pixels by summing galaxy shears and normalising by the overall average, averages them per pixel otherwise. Defaults to False.
         """
+        self._sum = SUM
         self.verbose_print(1, f"Pixelising catalog : npix = {self._npix}")
         start_time = time()
         pix_ind = hp.ang2pix(
@@ -35,7 +36,10 @@ class PixelMassAperture(MassApertureMap):
             lonlat=True)
         ng = np.bincount(pix_ind, minlength=self._npix)
 
-        shear_catalog.normalise_weights(self._npix, pix_ind, ng, SUM=SUM)
+        self.ng_weight = self.get_healpix_weights(shear_catalog, pix_ind)
+
+        if not SUM:
+            shear_catalog.normalise_weights(pix_ind, self.ng_weight)
 
         self.gamma1 = np.zeros(self._npix, dtype=np.float64)
         self.gamma2 = np.zeros(self._npix, dtype=np.float64)
@@ -164,18 +168,29 @@ class PixelMassAperture(MassApertureMap):
         else:
             gamma1_sq_j = None
             gamma2_sq_j = None
+        
+        if self._sum:
+            non_zero_weights = self.ng_weight[neighbors][self.ng_weight[neighbors] > 0]
+            if len(non_zero_weights) > 0:    
+                avg_weight = np.mean(non_zero_weights)
+                gamma1_j /= avg_weight
+                gamma2_j /= avg_weight
+                
+                if self._squares:
+                    avg_weight_sq = np.mean(non_zero_weights**2)
+                    gamma1_sq_j /= avg_weight_sq
+                    gamma2_sq_j /= avg_weight_sq
 
         return center, ra_j, dec_j, gamma1_j, gamma2_j, gamma1_sq_j, gamma2_sq_j
 
     def initialise_mass_aperture(
             self,
             shear_catalog=None,
-            SUM=False,
             return_squares=True,
             return_barycenters=False):
         self.check_pixelisation(
             shear_catalog,
-            SUM,
+            self._sum,
             return_squares,
             return_barycenters)
         return {}

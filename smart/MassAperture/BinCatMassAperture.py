@@ -19,6 +19,7 @@ class BinCatMassAperture(MassApertureMap):
         SUM : Boolean, optional
             If False, normalises the shear weights per pixel, otherwise normalises by the average over the whole map. Defaults to False.
         """
+        self._sum = SUM
         self.verbose_print(1, f"Binning catalog : npix = {self._npix}")
         start_time = time()
         pix_ind = hp.ang2pix(
@@ -28,14 +29,20 @@ class BinCatMassAperture(MassApertureMap):
             nest=False,
             lonlat=True)
         ngal_pix = np.bincount(pix_ind, minlength=self._npix)
-        shear_catalog.normalise_weights(self._npix, pix_ind, ngal_pix, SUM=SUM)
+        
+        if not SUM:
+            ng_weight = self.get_healpix_weights(shear_catalog, pix_ind)
+            shear_catalog.normalise_weights(pix_ind, ng_weight)
 
         ra, dec = np.radians(shear_catalog.ra), np.radians(shear_catalog.dec)
 
         pixel_order = np.argsort(pix_ind)
         offsets = np.r_[0, np.cumsum(ngal_pix), shear_catalog.ngal]
 
-        all_gals = np.empty((shear_catalog.ngal, 4), dtype=np.float64)
+        if SUM:
+            all_gals = np.empty((shear_catalog.ngal, 5), dtype=np.float64)
+        else:
+            all_gals = np.empty((shear_catalog.ngal, 4), dtype=np.float64)
 
         all_gals[:, 0] = ra[pixel_order]
         all_gals[:, 1] = dec[pixel_order]
@@ -46,6 +53,10 @@ class BinCatMassAperture(MassApertureMap):
             shear_catalog.weight[pixel_order]
         all_gals[:, 3] = shear_catalog.gamma2[pixel_order] * \
             shear_catalog.weight[pixel_order]
+        
+        if SUM:
+            all_gals[:, 4] = shear_catalog.weight[pixel_order]
+        
         self.verbose_print(
             2, f"Catalog binned in {
                 time() - start_time:.2f} seconds.")
@@ -59,8 +70,12 @@ class BinCatMassAperture(MassApertureMap):
         neighbors = hp.query_disc(self.nside, vecs[:, i], radius_rad)
 
         neighbor_lenghts = offsets[neighbors + 1] - offsets[neighbors]
-        neighbor_data = np.empty(
-            (sum(neighbor_lenghts), 4), dtype=all_gals.dtype)
+        if self._sum:
+            neighbor_data = np.empty(
+                (sum(neighbor_lenghts), 5), dtype=all_gals.dtype)
+        else:
+            neighbor_data = np.empty(
+                (sum(neighbor_lenghts), 4), dtype=all_gals.dtype)
 
         pos = 0
         for n in range(len(neighbors)):
@@ -72,22 +87,34 @@ class BinCatMassAperture(MassApertureMap):
         dec_j = neighbor_data[:, 1]
         gamma1_j = neighbor_data[:, 2]
         gamma2_j = neighbor_data[:, 3]
+        gamma1_j_sq = None
+        gamma2_j_sq = None
+
         if self._squares:
             gamma1_j_sq = gamma1_j**2
             gamma2_j_sq = gamma2_j**2
-        else:
-            gamma1_j_sq = None
-            gamma2_j_sq = None
+
+        if self._sum:
+            weights_j = neighbor_data[:, 4]
+            # Sum of (neighbor_lengths > 0) is the number of non-empty pixels
+            avg_weight = np.sum(weights_j) / np.sum(neighbor_lenghts > 0)
+            gamma1_j /= avg_weight
+            gamma2_j /= avg_weight
+            
+            if self._squares:
+                avg_weight_sq = np.sum(weights_j**2) / np.sum(neighbor_lenghts > 0)
+                gamma1_j_sq /= avg_weight_sq
+                gamma2_j_sq /= avg_weight_sq
+
         center = (ra[i], dec[i])
         return center, ra_j, dec_j, gamma1_j, gamma2_j, gamma1_j_sq, gamma2_j_sq
 
     def initialise_mass_aperture(
             self,
             shear_catalog=None,
-            SUM=False,
             return_squares=True,
             return_barycenters=False):
         ra, dec = self.get_healpix_ra_dec()
-        all_gals, offsets = self.bin_catalog(shear_catalog)
+        all_gals, offsets = self.bin_catalog(shear_catalog, SUM=self._sum)
 
         return {"all_gals": all_gals, "offsets": offsets, "ra": ra, "dec": dec}

@@ -56,6 +56,7 @@ class MassApertureMap(ABC):
         self._npix = hp.nside2npix(self.nside)
         self._psize_rad = hp.nside2resol(self.nside)
         self._squares = False
+        self._sum = False
         self.verbosity = verbosity
 
     def verbose_print(self, verbosity, *args):
@@ -138,7 +139,7 @@ class MassApertureMap(ABC):
         """
         center, ra, dec, gamma1, gamma2, gamma1_sq, gamma2_sq = self.query_neighbors(
             i, vecs, radius_rad, **kwargs)
-        # print(gamma1)
+
         center_ra, center_dec = center
 
         r = np.arccos(
@@ -151,13 +152,12 @@ class MassApertureMap(ABC):
                 center_ra))
         r /= self._psize_rad
 
-        # Derive the angle between the two segment (using longitude and
-        # latitude)
         psi = polar_angle(center_dec, center_ra, dec, ra)
 
         # Compute the tangential and cross shear
         gamma_t = gamma1 * np.cos(2 * psi) - gamma2 * np.sin(2 * psi)
         gamma_x = -gamma1 * np.sin(2 * psi) - gamma2 * np.cos(2 * psi)
+
         # Aperture mass filter
         Q = filter(r)
         mapE_i = np.sum(gamma_t * Q)
@@ -182,6 +182,20 @@ class MassApertureMap(ABC):
         """
         return np.array(hp.pix2vec(self.nside, np.arange(self._npix)))
 
+    def get_healpix_weights(self, shear_catalog : ShearCatalog, pix_ind):
+        """
+        Utility function to compute the sum of shear weights in each pixel.
+        
+        Args:
+            shear_catalog : ShearCatalog
+                A ShearCatalog object containing the galaxy shear data.
+            pix_ind : np.ndarray
+                Array of pixel indices corresponding to each galaxy in the catalog.
+        """
+        ng_weight = np.zeros(self._npix, dtype=np.float64)
+        np.add.at(ng_weight, pix_ind, shear_catalog.weight)
+        return ng_weight
+
     @abstractmethod
     def query_neighbors(self, i, vecs, radius_rad, **kwargs):
         """
@@ -203,7 +217,6 @@ class MassApertureMap(ABC):
     def initialise_mass_aperture(
             self,
             shear_catalog=None,
-            SUM=False,
             return_squares=True,
             return_barycenters=False):
         """
@@ -218,7 +231,7 @@ class MassApertureMap(ABC):
             shear_catalog: ShearCatalog = None,
             SUM=False,
             return_noise=True,
-            return_barycenters=False):
+            barycenters=False):
         """
         Main function to compute the healpix mass aperture map.
 
@@ -232,18 +245,19 @@ class MassApertureMap(ABC):
             If True, group the pixels by summing galaxy shears, averages them otherwise. In methods that do not pixelise shear, changes wether shear weights are normalized per pixel or by the average overall shear. Defaults to False.
         return_noise : bool, optional
             If True, also compute and return the noise map. Defaults to True.
-        return_barycenters : bool, optional
-            If True, also compute the barycenter of the galaxies in each pixel (only used if shear is pixelised, where it allows better accuracy). Defaults to False.
+        barycenters : bool, optional
+            If True, use the barycenter of the galaxies in each pixel (only used if shear is pixelised, where it allows better accuracy). Defaults to False.
 
         Returns the mass aperture E-mode map, B-mode map, noise map (if return_noise=True) and mask of the pixels used for the computation.
         """
         self.verbose_print(1, f"Number of galaxies = {shear_catalog.ngal}")
         self._squares = return_noise
+        self._sum = SUM
         kwargs = self.initialise_mass_aperture(
-            shear_catalog, SUM, return_noise, return_barycenters)
+            shear_catalog, return_noise, barycenters)
         start_time = time()
+        self.verbose_print(2, f"SUM = {self._sum}, NOISE = {self._squares}")
         self.verbose_print(2, "Starting mass aperture computation...")
-
         if isinstance(filter, str):
             filter = self.get_filter_by_name("J04")
         if not callable(filter):
