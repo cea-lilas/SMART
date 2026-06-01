@@ -258,7 +258,7 @@ class MassApertureMap(ABC):
         self.verbose_print(2, f"SUM = {self._sum}, NOISE = {self._squares}")
         self.verbose_print(2, "Starting mass aperture computation...")
         if isinstance(filter, str):
-            filter = self.get_filter_by_name("J04")
+            filter = self.get_filter_by_name(filter)
         if not callable(filter):
             raise ValueError(
                 "Filter must be a valid filter name or a callable function taking one argument r.")
@@ -301,18 +301,26 @@ class MassApertureMap(ABC):
             self,
             filename,
             r_theta_cut,
-            filter=None,
+            filter="J04",
             shear_catalog=None,
             SUM=False,
             return_noise=True,
-            return_barycenters=False):
+            barycenters=False):
         if return_noise:
             mapE, mapB, map_vnoise, mask_hp = self.get_mass_aperture(
-                r_theta_cut, filter, shear_catalog, SUM, return_noise, return_barycenters)
-            Table([mapE, mapB, map_vnoise, mask_hp], names=[
-                  "mapE", "mapB", "map_vnoise", "mask"]).write(filename, overwrite=True)
+                r_theta_cut, filter, shear_catalog, SUM, return_noise, barycenters)
+            output_table = Table([mapE, mapB, map_vnoise, mask_hp], names=[
+                  "mapE", "mapB", "map_vnoise", "mask"])
         else:
             mapE, mapB, mask_hp = self.get_mass_aperture(
-                r_theta_cut, filter, shear_catalog, SUM, return_noise, return_barycenters)
-            Table([mapE, mapB, mask_hp], names=["mapE", "mapB", "mask"]).write(
-                filename, overwrite=True)
+                r_theta_cut, filter, shear_catalog, SUM, return_noise, barycenters)
+            output_table = Table([mapE, mapB, mask_hp], names=["mapE", "mapB", "mask"])
+
+        output_table.meta['PIXTYPE'] = 'HEALPIX'
+        output_table.meta['NSIDE'] = self.nside
+        output_table.meta['ORDERING'] = 'RING'
+        output_table.meta['INDXSCHM'] = 'IMPLICIT'
+        output_table.meta['FIRSTPIX'] = 0
+        output_table.meta['LASTPIX'] = self._npix - 1
+
+        output_table.write(filename, overwrite=True)
