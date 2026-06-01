@@ -111,8 +111,7 @@ class MassApertureMap(ABC):
         mask_hp = self.mask.copy()
         masked_pixels = np.nonzero(self.mask)[0]
         self.verbose_print(
-            2, f'Number of masked pixels = {
-                len(masked_pixels)}')
+            2, f'Number of masked pixels = {len(masked_pixels)}')
         for pix in masked_pixels:
             if not np.all(mask_hp[hp.get_all_neighbours(self.nside, pix)]):
                 disc = hp.query_disc(self.nside, vecs[:, pix], radius_rad)
@@ -185,7 +184,7 @@ class MassApertureMap(ABC):
     def get_healpix_weights(self, shear_catalog : ShearCatalog, pix_ind):
         """
         Utility function to compute the sum of shear weights in each pixel.
-        
+
         Args:
             shear_catalog : ShearCatalog
                 A ShearCatalog object containing the galaxy shear data.
@@ -291,8 +290,7 @@ class MassApertureMap(ABC):
                     filter, i, pix_vec, radius_rad, **kwargs)
 
         self.verbose_print(
-            2, f"Mass aperture computation done in {
-                time() - start_time:.2f} seconds.")
+            2, f"Mass aperture computation done in {time() - start_time:.2f} seconds.")
 
         if self._squares:
             return mapE, mapB, map_vnoise, mask_hp

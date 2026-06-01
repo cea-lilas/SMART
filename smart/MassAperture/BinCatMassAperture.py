@@ -29,7 +29,7 @@ class BinCatMassAperture(MassApertureMap):
             nest=False,
             lonlat=True)
         ngal_pix = np.bincount(pix_ind, minlength=self._npix)
-        
+
         if not SUM:
             ng_weight = self.get_healpix_weights(shear_catalog, pix_ind)
             shear_catalog.normalise_weights(pix_ind, ng_weight)
@@ -53,13 +53,12 @@ class BinCatMassAperture(MassApertureMap):
             shear_catalog.weight[pixel_order]
         all_gals[:, 3] = shear_catalog.gamma2[pixel_order] * \
             shear_catalog.weight[pixel_order]
-        
+
         if SUM:
             all_gals[:, 4] = shear_catalog.weight[pixel_order]
-        
+
         self.verbose_print(
-            2, f"Catalog binned in {
-                time() - start_time:.2f} seconds.")
+            2, f"Catalog binned in {time() - start_time:.2f} seconds.")
         return all_gals, offsets
 
     def query_neighbors(self, i, vecs, radius_rad, **kwargs):
@@ -100,7 +99,7 @@ class BinCatMassAperture(MassApertureMap):
             avg_weight = np.sum(weights_j) / np.sum(neighbor_lenghts > 0)
             gamma1_j /= avg_weight
             gamma2_j /= avg_weight
-            
+
             if self._squares:
                 avg_weight_sq = np.sum(weights_j**2) / np.sum(neighbor_lenghts > 0)
                 gamma1_j_sq /= avg_weight_sq

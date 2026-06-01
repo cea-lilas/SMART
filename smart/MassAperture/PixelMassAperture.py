@@ -84,8 +84,7 @@ class PixelMassAperture(MassApertureMap):
         self.ra, self.dec = self.get_healpix_ra_dec()
         self._done_pixelisation = True
         self.verbose_print(
-            2, f"Pixelisation done in {
-                time() - start_time:.2f} seconds.")
+            2, f"Pixelisation done in {time() - start_time:.2f} seconds.")
 
     def check_pixelisation(
             self,
@@ -168,14 +167,14 @@ class PixelMassAperture(MassApertureMap):
         else:
             gamma1_sq_j = None
             gamma2_sq_j = None
-        
+
         if self._sum:
             non_zero_weights = self.ng_weight[neighbors][self.ng_weight[neighbors] > 0]
-            if len(non_zero_weights) > 0:    
+            if len(non_zero_weights) > 0:
                 avg_weight = np.mean(non_zero_weights)
                 gamma1_j /= avg_weight
                 gamma2_j /= avg_weight
-                
+
                 if self._squares:
                     avg_weight_sq = np.mean(non_zero_weights**2)
                     gamma1_sq_j /= avg_weight_sq

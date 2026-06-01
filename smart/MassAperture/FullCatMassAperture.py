@@ -13,7 +13,7 @@ class FullCatMassAperture(MassApertureMap):
         g2 = kwargs.get('g2')
         galaxy_KDtree = kwargs.get('kdtree')
         center = np.radians(hp.pix2ang(self.nside, i, lonlat=True))
-        
+
         if self._sum:
             apt_size_pix = np.sum(self.mask[hp.query_disc(self.nside, vecs[:, i], radius_rad)])
 
@@ -36,7 +36,7 @@ class FullCatMassAperture(MassApertureMap):
             avg_weight = np.sum(shear_catalog.weight[neighbors])/apt_size_pix
             g1_j /= avg_weight
             g2_j /= avg_weight
-            
+
             if self._squares:
                 avg_weight_sq = np.sum(shear_catalog.weight[neighbors]**2)/apt_size_pix
                 g1_j_sq /= avg_weight_sq
@@ -55,9 +55,9 @@ class FullCatMassAperture(MassApertureMap):
             shear_catalog.dec,
             lonlat=True)
         ng_weight = self.get_healpix_weights(shear_catalog, pix_ind)
-        
+
         self.mask = ng_weight > 0
-        
+
         if not self._sum:
             self.verbose_print(2, "Applying shear weights...")
             shear_catalog.normalise_weights(pix_ind, ng_weight)
