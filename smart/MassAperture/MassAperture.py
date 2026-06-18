@@ -72,6 +72,22 @@ class MassApertureMap(ABC):
         if self.verbosity >= verbosity:
             print(*args)
 
+    @staticmethod
+    def time_to_string(timestamp):
+
+        hours = int(timestamp // 3600)
+        minutes = int((timestamp % 3600) // 60)
+        seconds = timestamp % 60
+
+        parts = []
+        if hours > 0:
+            parts.append(f"{hours}h")
+        if minutes > 0:
+            parts.append(f"{minutes}m")
+        parts.append(f"{seconds:.2f}s")
+
+        return " ".join(parts)
+
     def get_filter_by_name(self, name, theta=None, x_c=0.1):
         """
         Retrives an implemented filter function by its name.
@@ -252,9 +268,9 @@ class MassApertureMap(ABC):
         self.verbose_print(1, f"Number of galaxies = {shear_catalog.ngal}")
         self._squares = return_noise
         self._sum = SUM
+        start_time = time()
         kwargs = self.initialise_mass_aperture(
             shear_catalog, return_noise, barycenters)
-        start_time = time()
         self.verbose_print(2, f"SUM = {self._sum}, NOISE = {self._squares}")
         self.verbose_print(2, "Starting mass aperture computation...")
         if isinstance(filter, str):
@@ -290,7 +306,7 @@ class MassApertureMap(ABC):
                     filter, i, pix_vec, radius_rad, **kwargs)
 
         self.verbose_print(
-            2, f"Mass aperture computation done in {time() - start_time:.2f} seconds.")
+            2, f"Total mass aperture computation time : {self.time_to_string(time() - start_time)}")
 
         if self._squares:
             return mapE, mapB, map_vnoise, mask_hp

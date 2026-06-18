@@ -84,7 +84,7 @@ class PixelMassAperture(MassApertureMap):
         self.ra, self.dec = self.get_healpix_ra_dec()
         self._done_pixelisation = True
         self.verbose_print(
-            2, f"Pixelisation done in {time() - start_time:.2f} seconds.")
+            2, f"Pixelisation done in {self.time_to_string(time() - start_time)}")
 
     def check_pixelisation(
             self,

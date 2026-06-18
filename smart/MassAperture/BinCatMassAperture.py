@@ -58,7 +58,7 @@ class BinCatMassAperture(MassApertureMap):
             all_gals[:, 4] = shear_catalog.weight[pixel_order]
 
         self.verbose_print(
-            2, f"Catalog binned in {time() - start_time:.2f} seconds.")
+            2, f"Catalog binned in {self.time_to_string(time() - start_time)}")
         return all_gals, offsets
 
     def query_neighbors(self, i, vecs, radius_rad, **kwargs):
