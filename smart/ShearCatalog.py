@@ -31,6 +31,7 @@ class ShearCatalog():
                 Sign to apply to the gamma2 component (1 or -1). Defaults to 1.
         """
         self.shear_catalog = shear_catalog
+        self._normalized = False
         self.ra = shear_catalog[columns[0]]
         self.dec = shear_catalog[columns[1]]
         self.gamma1 = shear_catalog[columns[2]].astype(
@@ -74,5 +75,8 @@ class ShearCatalog():
             pix_ind : np.ndarray
                 Array of pixel indices corresponding to each galaxy in the catalog.
         """
+        if self._normalized:
+            return
         ng_weight[ng_weight == 0] = 1
         self.weight /= ng_weight[pix_ind]
+        self._normalized = True

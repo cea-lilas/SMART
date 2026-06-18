@@ -31,8 +31,11 @@ class BinCatMassAperture(MassApertureMap):
         ngal_pix = np.bincount(pix_ind, minlength=self._npix)
 
         if not SUM:
+            self.verbose_print(1, "Shear catalog normalised by pixel weights.")
             ng_weight = self.get_healpix_weights(shear_catalog, pix_ind)
             shear_catalog.normalise_weights(pix_ind, ng_weight)
+        elif shear_catalog._normalized:
+            raise ValueError("Shear catalog has been normalised by pixel weights. It cannot be used with SUM=True.")
 
         ra, dec = np.radians(shear_catalog.ra), np.radians(shear_catalog.dec)
 

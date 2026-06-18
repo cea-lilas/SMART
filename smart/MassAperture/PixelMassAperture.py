@@ -39,7 +39,10 @@ class PixelMassAperture(MassApertureMap):
         self.ng_weight = self.get_healpix_weights(shear_catalog, pix_ind)
 
         if not SUM:
+            self.verbose_print(1, "Shear catalog normalised by pixel weights.")
             shear_catalog.normalise_weights(pix_ind, self.ng_weight)
+        elif shear_catalog._normalized:
+            raise ValueError("Shear catalog has been normalised by pixel weights. It cannot be used with SUM=True.")
 
         self.gamma1 = np.zeros(self._npix, dtype=np.float64)
         self.gamma2 = np.zeros(self._npix, dtype=np.float64)

@@ -59,8 +59,11 @@ class FullCatMassAperture(MassApertureMap):
         self.mask = ng_weight > 0
 
         if not self._sum:
-            self.verbose_print(2, "Applying shear weights...")
+            self.verbose_print(1, "Shear catalog normalised by pixel weights.")
             shear_catalog.normalise_weights(pix_ind, ng_weight)
+        elif shear_catalog._normalized:
+            raise ValueError("Shear catalog has been normalised by pixel weights. It cannot be used with SUM=True.")
+
         g1 = shear_catalog.gamma1 * shear_catalog.weight
         g2 = shear_catalog.gamma2 * shear_catalog.weight
 
