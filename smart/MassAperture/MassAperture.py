@@ -326,7 +326,7 @@ class MassApertureMap(ABC):
             mapE, mapB, map_vnoise, mask_hp = self.get_mass_aperture(
                 r_theta_cut, filter, shear_catalog, SUM, return_noise, barycenters)
             output_table = Table([mapE, mapB, map_vnoise, mask_hp], names=[
-                  "mapE", "mapB", "map_vnoise", "mask"])
+                  "MAP_E", "MAP_B", "VNOISE", "MASK"])
         else:
             mapE, mapB, mask_hp = self.get_mass_aperture(
                 r_theta_cut, filter, shear_catalog, SUM, return_noise, barycenters)
