@@ -1,5 +1,5 @@
 import numpy as np
-
+from astropy.table import Table
 
 class ShearCatalog():
     """
@@ -76,7 +76,26 @@ class ShearCatalog():
                 Array of pixel indices corresponding to each galaxy in the catalog.
         """
         if self._normalized:
+            print("Weights are already normalised.")
             return
         ng_weight[ng_weight == 0] = 1
         self.weight /= ng_weight[pix_ind]
         self._normalized = True
+    
+    def save_to_fits(self, filename):
+        """
+        Saves the shear catalog to a FITS file.
+
+        Args:
+            filename : str
+                Name of the output FITS file.
+        """
+        table = Table()
+        table['RA'] = self.ra
+        table['DEC'] = self.dec
+        table['GAMMA1'] = self.gamma1
+        table['GAMMA2'] = self.gamma2
+        table['WEIGHT'] = self.weight
+        if self.phz is not None:
+            table['Z'] = self.phz
+        table.write(filename, format='fits', overwrite=True)
