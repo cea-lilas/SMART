@@ -152,7 +152,7 @@ class MassApertureMap(ABC):
             **kwargs :
                 Additional arguments to pass to the query_neighbors function, depending on the mass aperture implementation.
         """
-        center, ra, dec, gamma1, gamma2, gamma1_sq, gamma2_sq = self.query_neighbors(
+        center, ra, dec, gamma1, gamma2, gamma1_sq, gamma2_sq, avg_weight, avg_weight_sq = self.query_neighbors(
             i, vecs, radius_rad, **kwargs)
 
         center_ra, center_dec = center
@@ -175,12 +175,12 @@ class MassApertureMap(ABC):
 
         # Aperture mass filter
         Q = filter(r)
-        mapE_i = np.sum(gamma_t * Q)
-        mapB_i = np.sum(gamma_x * Q)
+        mapE_i = np.sum(gamma_t * Q)/avg_weight
+        mapB_i = np.sum(gamma_x * Q)/avg_weight
         if not self._squares:
             return mapE_i, mapB_i
 
-        map_vnoise_i = 1 / 2 * np.sum((gamma1_sq + gamma2_sq) * Q**2)
+        map_vnoise_i = 1 / 2 * np.sum((gamma1_sq + gamma2_sq) * Q**2)/avg_weight_sq
         return mapE_i, mapB_i, map_vnoise_i
 
     def get_healpix_ra_dec(self):
