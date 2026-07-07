@@ -42,23 +42,25 @@ class BinCatMassAperture(MassApertureMap):
         pixel_order = np.argsort(pix_ind)
         offsets = np.r_[0, np.cumsum(ngal_pix), shear_catalog.ngal]
 
-        if SUM:
-            all_gals = np.empty((shear_catalog.ngal, 5), dtype=np.float64)
-        else:
-            all_gals = np.empty((shear_catalog.ngal, 4), dtype=np.float64)
-
-        all_gals[:, 0] = ra[pixel_order]
-        all_gals[:, 1] = dec[pixel_order]
+        gamma1 = shear_catalog.gamma1[pixel_order]
+        gamma2 = shear_catalog.gamma2[pixel_order]
+        weight = shear_catalog.weight[pixel_order]
 
         self.mask = (ngal_pix > 0)
 
-        all_gals[:, 2] = shear_catalog.gamma1[pixel_order] * \
-            shear_catalog.weight[pixel_order]
-        all_gals[:, 3] = shear_catalog.gamma2[pixel_order] * \
-            shear_catalog.weight[pixel_order]
-
         if SUM:
-            all_gals[:, 4] = shear_catalog.weight[pixel_order]
+            all_gals = np.column_stack((
+                ra[pixel_order],
+                dec[pixel_order],
+                gamma1 * weight,
+                gamma2 * weight,
+                weight))
+        else:
+            all_gals = all_gals = np.column_stack((
+                ra[pixel_order],
+                dec[pixel_order],
+                gamma1 * weight,
+                gamma2 * weight))
 
         self.verbose_print(
             2, f"Catalog binned in {self.time_to_string(time() - start_time)}")

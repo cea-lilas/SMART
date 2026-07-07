@@ -30,17 +30,17 @@ class ShearCatalog():
             gamma2_sign : int, optional
                 Sign to apply to the gamma2 component (1 or -1). Defaults to 1.
         """
-        self.shear_catalog = shear_catalog
+        if shear_catalog.dtype.byteorder not in ('=', '|'):
+            # Fits files are big-endian, ensure the data is in native byte order for processing
+            shear_catalog.byteswap().view(shear_catalog.dtype.newbyteorder('='))
         self._normalized = False
         self.ra = shear_catalog[columns[0]]
         self.dec = shear_catalog[columns[1]]
-        self.gamma1 = shear_catalog[columns[2]].astype(
-            np.float64) * gamma1_sign
-        self.gamma2 = shear_catalog[columns[3]].astype(
-            np.float64) * gamma2_sign
-        self.weight = shear_catalog[columns[4]].astype(np.float64)
+        self.gamma1 = shear_catalog[columns[2]] * gamma1_sign
+        self.gamma2 = shear_catalog[columns[3]] * gamma2_sign
+        self.weight = shear_catalog[columns[4]]
         if len(columns) > 5:
-            self.phz = shear_catalog[columns[5]].astype(np.float64)
+            self.phz = shear_catalog[columns[5]]
         else:
             self.phz = None
         self.ngal = np.shape(self.ra)[0]
