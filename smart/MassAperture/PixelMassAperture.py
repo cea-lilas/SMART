@@ -171,15 +171,13 @@ class PixelMassAperture(MassApertureMap):
             gamma1_sq_j = None
             gamma2_sq_j = None
 
-        avg_weight, avg_weight_sq = 1, 1
+        avg_weight = 1
         if self._sum:
             non_zero_weights = self.ng_weight[neighbors][self.ng_weight[neighbors] > 0]
             if len(non_zero_weights) > 0:
                 avg_weight = np.mean(non_zero_weights)
-                if self._squares:
-                    avg_weight_sq = np.mean(non_zero_weights**2)
 
-        return center, ra_j, dec_j, gamma1_j, gamma2_j, gamma1_sq_j, gamma2_sq_j, avg_weight, avg_weight_sq
+        return center, ra_j, dec_j, gamma1_j, gamma2_j, gamma1_sq_j, gamma2_sq_j, avg_weight
 
     def initialise_mass_aperture(
             self,

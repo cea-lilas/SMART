@@ -28,15 +28,13 @@ class FullCatMassAperture(MassApertureMap):
             g1_j_sq = g1_j**2
             g2_j_sq = g2_j**2
 
-        avg_weight, avg_weight_sq = 1, 1
+        avg_weight = 1
         if self._sum and len(neighbors) > 0:
             apt_size_pix = np.sum(self.mask[hp.query_disc(self.nside, vecs[:, i], radius_rad)])
             if apt_size_pix > 0:
                 avg_weight = np.sum(shear_catalog.weight[neighbors])/apt_size_pix
-                if self._squares:
-                    avg_weight_sq = np.sum(shear_catalog.weight[neighbors]**2)/apt_size_pix
 
-        return center, ra_j, dec_j, g1_j, g2_j, g1_j_sq, g2_j_sq, avg_weight, avg_weight_sq
+        return center, ra_j, dec_j, g1_j, g2_j, g1_j_sq, g2_j_sq, avg_weight
 
     def initialise_mass_aperture(
             self,
