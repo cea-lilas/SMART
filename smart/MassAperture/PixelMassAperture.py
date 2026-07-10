@@ -44,32 +44,27 @@ class PixelMassAperture(MassApertureMap):
         elif shear_catalog._normalized:
             raise ValueError("Shear catalog has been normalised by pixel weights. It cannot be used with SUM=True.")
 
-        self.gamma1 = np.zeros(self._npix, dtype=np.float64)
-        self.gamma2 = np.zeros(self._npix, dtype=np.float64)
-
-        np.add.at(
-            self.gamma1,
+        self.gamma1 = np.bincount(
             pix_ind,
             shear_catalog.gamma1 *
-            shear_catalog.weight)
-        np.add.at(
-            self.gamma2,
+            shear_catalog.weight,
+            minlength=self._npix)
+        self.gamma2 = np.bincount(
             pix_ind,
             shear_catalog.gamma2 *
-            shear_catalog.weight)
+            shear_catalog.weight,
+            minlength=self._npix)
 
         if return_squares:
             self._squares = True
-            self.gamma1_sq = np.zeros(self._npix, dtype=np.float64)
-            self.gamma2_sq = np.zeros(self._npix, dtype=np.float64)
-            np.add.at(
-                self.gamma1_sq,
+            self.gamma1_sq = np.bincount(
                 pix_ind,
-                (shear_catalog.gamma1 * shear_catalog.weight)**2)
-            np.add.at(
-                self.gamma2_sq,
+                (shear_catalog.gamma1 * shear_catalog.weight)**2,
+                minlength=self._npix)
+            self.gamma2_sq = np.bincount(
                 pix_ind,
-                (shear_catalog.gamma2 * shear_catalog.weight)**2)
+                (shear_catalog.gamma2 * shear_catalog.weight)**2,
+                minlength=self._npix)
 
         self.mask = ng > 0
 

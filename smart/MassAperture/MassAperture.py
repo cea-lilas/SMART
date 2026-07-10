@@ -207,8 +207,7 @@ class MassApertureMap(ABC):
             pix_ind : np.ndarray
                 Array of pixel indices corresponding to each galaxy in the catalog.
         """
-        ng_weight = np.zeros(self._npix, dtype=np.float64)
-        np.add.at(ng_weight, pix_ind, shear_catalog.weight)
+        ng_weight = np.bincount(pix_ind, shear_catalog.weight, minlength=self._npix)
         return ng_weight
 
     @abstractmethod
