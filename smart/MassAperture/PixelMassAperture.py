@@ -77,12 +77,36 @@ class PixelMassAperture(MassApertureMap):
             self._barycenters = True
             self.ra_c = np.zeros(self._npix, dtype=np.float64)
             self.dec_c = np.zeros(self._npix, dtype=np.float64)
-            np.add.at(self.ra_c, pix_ind, shear_catalog.ra)
-            self.ra_c[self.mask] = np.radians(
-                self.ra_c[self.mask] / ng[self.mask])
-            np.add.at(self.dec_c, pix_ind, shear_catalog.dec)
-            self.dec_c[self.mask] = np.radians(
-                self.dec_c[self.mask] / ng[self.mask])
+
+            ra_rad = np.radians(shear_catalog.ra)
+            dec_rad = np.radians(shear_catalog.dec)
+
+            x_bary = np.bincount(
+                pix_ind,
+                np.cos(dec_rad) *
+                np.cos(ra_rad),
+                minlength=self._npix)
+            y_bary = np.bincount(
+                pix_ind,
+                np.cos(dec_rad) *
+                np.sin(ra_rad),
+                minlength=self._npix)
+            z_bary = np.bincount(
+                pix_ind,
+                np.sin(dec_rad),
+                minlength=self._npix)
+            norm = np.sqrt(x_bary[self.mask]**2 +
+                           y_bary[self.mask]**2 + z_bary[self.mask]**2)
+            x_bary[self.mask] /= norm
+            y_bary[self.mask] /= norm
+            z_bary[self.mask] /= norm
+
+            self.ra_c[self.mask] = np.arctan2(
+                y_bary[self.mask], x_bary[self.mask])
+            self.dec_c[self.mask] = np.arcsin(z_bary[self.mask])
+
+            self.ra_c[self.mask] = self.ra_c[self.mask] % (2 * np.pi)
+            self.dec_c[self.mask] = self.dec_c[self.mask]
 
         self.ra, self.dec = self.get_healpix_ra_dec()
         self._done_pixelisation = True
