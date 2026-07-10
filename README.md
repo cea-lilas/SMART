@@ -25,7 +25,7 @@ pip install .
 ### Example usage:
 
 ```python
-from SMART import ShearCatalog, PixelMassAperture
+from smart import ShearCatalog, PixelMassAperture
 from astropy.io import fits
 
 data = fits.getdata("catalogue.fits")
