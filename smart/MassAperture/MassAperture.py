@@ -53,11 +53,13 @@ class MassApertureMap(ABC):
                 Verbosity level (0: no print, 1: important info, 2: more info (computation time)).
         """
         self.nside = nside
+        self.verbosity = verbosity
         self._npix = hp.nside2npix(self.nside)
         self._psize_rad = hp.nside2resol(self.nside)
         self._squares = False
         self._sum = False
-        self.verbosity = verbosity
+        self._norm_by_pix = False
+        self._pix_area_arcmin = hp.nside2pixarea(self.nside, degrees=True)*60**2
 
     def verbose_print(self, verbosity, *args):
         """
@@ -154,7 +156,11 @@ class MassApertureMap(ABC):
         """
         center, ra, dec, gamma1, gamma2, gamma1_sq, gamma2_sq, avg_weight = self.query_neighbors(
             i, vecs, radius_rad, **kwargs)
-
+        
+        if not self._norm_by_pix:
+            # Convert galaxy density to arcmin^2
+            avg_weight = avg_weight * self._pix_area_arcmin
+        
         center_ra, center_dec = center
 
         r = np.arccos(
@@ -245,7 +251,8 @@ class MassApertureMap(ABC):
             shear_catalog: ShearCatalog = None,
             SUM=False,
             return_noise=True,
-            barycenters=False):
+            barycenters=False,
+            norm_by_pix=False):
         """
         Main function to compute the healpix mass aperture map.
 
@@ -261,12 +268,15 @@ class MassApertureMap(ABC):
             If True, also compute and return the noise map. Defaults to True.
         barycenters : bool, optional
             If True, use the barycenter of the galaxies in each pixel (only used if shear is pixelised, where it allows better accuracy). Defaults to False.
+        norm_by_pix  : bool, optional
+            If True, normalizes by the galaxy density per pixel instead of per arcmin^2. Defaults to False.
 
         Returns the mass aperture E-mode map, B-mode map, noise map (if return_noise=True) and mask of the pixels used for the computation.
         """
         self.verbose_print(1, f"Number of galaxies = {shear_catalog.ngal}")
         self._squares = return_noise
         self._sum = SUM
+        self._norm_by_pix = norm_by_pix
         start_time = time()
         kwargs = self.initialise_mass_aperture(
             shear_catalog, return_noise, barycenters)
