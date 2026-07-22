@@ -124,7 +124,7 @@ class MassApertureMap(ABC):
             vecs : np.ndarray
                 Healpix pixel 3d vector positions as an array of shape (3, npix).
 
-        Returns the expanded mask and the indices of the pixels that are masked after expansion.
+        Returns the expanded mask.
         """
         mask_hp = self.mask.copy()
         masked_pixels = np.nonzero(self.mask)[0]
@@ -134,9 +134,7 @@ class MassApertureMap(ABC):
             if not np.all(mask_hp[hp.get_all_neighbours(self.nside, pix)]):
                 disc = hp.query_disc(self.nside, vecs[:, pix], radius_rad)
                 mask_hp[disc] = True
-        ind = np.nonzero(mask_hp)[0]
-        self.verbose_print(2, f"Masked pixels after expansion = {len(ind)}")
-        return mask_hp, ind
+        return mask_hp
 
     def apply_filter(self, filter, i, vecs, radius_rad, **kwargs):
         """
@@ -297,7 +295,9 @@ class MassApertureMap(ABC):
 
         pix_vec = self.get_healpix_vec()
 
-        mask_hp, ind = self.expand_mask(radius_rad, pix_vec)
+        mask_hp = self.expand_mask(radius_rad, pix_vec)
+        ind = np.nonzero(mask_hp)[0]
+        self.verbose_print(2, f"Masked pixels after expansion = {len(ind)}")
 
         if self.verbosity >= 1:
             ind = tqdm(
@@ -318,9 +318,9 @@ class MassApertureMap(ABC):
             2, f"Total mass aperture computation time : {self.time_to_string(time() - start_time)}")
 
         if self._squares:
-            return mapE, mapB, map_vnoise, mask_hp
+            return mapE, mapB, map_vnoise, self.mask
         else:
-            return mapE, mapB, mask_hp
+            return mapE, mapB, self.mask
 
     def save_mass_aperture(
             self,
