@@ -1,0 +1,36 @@
+name: Docs
+
+on:
+  push:
+    branches: ["main"]
+    paths: ["docs/**", "smart/**", "pyproject.toml"]
+  pull_request:
+    paths: ["docs/**", "smart/**", "pyproject.toml"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install package and docs dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install --group docs -e .
+
+      - name: Build Sphinx documentation
+        run: |
+          cd docs
+          make html SPHINXOPTS="-W"
+
+      - name: Upload built docs
+        uses: actions/upload-artifact@v5
+        with:
+          name: docs-html
+          path: docs/build/html
