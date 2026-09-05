@@ -19,9 +19,11 @@ shear_catalog = ShearCatalog(data, columns=columns, gamma2_sign=1)
 mass_aperture = PixelMassAperture(nside=2048, verbosity=2)
 # or mass_aperture = BinCatMassAperture(nside=2048, verbosity=2)
 # or mass_aperture = FullCatMassAperture(nside=2048, verbosity=2)
-# or ... [give an example for the 4th method]
 
 mapE, mapB, mask = mass_aperture.get_mass_aperture(3, shear_catalog=shear_catalog, return_noise=False)
+
+# Use barycenters=True with the pixelated method to calculate pixel barycenters and use them as pixel positions
+# mapE, mapB, mask = mass_aperture.get_mass_aperture(3, shear_catalog=shear_catalog, return_noise=False, barycenters=True)
 
 # Choose SUM=True, for the summed approach (default is averaged approach).
 # mapE, mapB, mask = mass_aperture.get_mass_aperture(3, shear_catalog=shear_catalog, return_noise=False, SUM=True)
