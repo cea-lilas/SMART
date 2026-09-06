@@ -23,3 +23,8 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+Acknowledgements
+================
+
+If you use the code SMART in any resulting work, we kindly ask you that you cite the following paper: Bezmathernykh et al. 2026 [link]. For any questions and feedback send an email to `Sandrine Pires <mailto:sandrine.pires@cea.fr>`_.
