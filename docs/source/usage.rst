@@ -12,7 +12,7 @@ Usage
 Catalog loading
 ###############
 
-You can load a galaxy catalogue from a FITS file using the `ShearCatalog` class. The catalogue is expected to contain columns for right ascension, declination, shear components (gamma1, gamma2), and weight. You need to specify the column names in the order they appear in the catalogue.
+You can load a galaxy catalogue from a FITS file using the `ShearCatalog` class. The catalogue is expected to contain columns for right ascension, declination, shear components (gamma1, gamma2), weight and optionally the redshift. You need to specify this exact order: RA, DEC, gamma1, gamma2, weight, and optionally redshift, independently of the column order in the catalogue.
 
 .. code-block:: python
 
