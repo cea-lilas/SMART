@@ -96,7 +96,7 @@ class MassApertureMap(ABC):
 
         Args:
             name : str
-                Name of the filter to retrieve. Implemented filters: 'jarvis'.
+                Name of the filter to retrieve. Possible values are 'J04', 'tanh', 'M18'.
             theta : float, optional
                 Scale parameter for the filter (if applicable).
         """
@@ -112,7 +112,7 @@ class MassApertureMap(ABC):
                 return get_miyazaki(theta)
             case _:
                 raise ValueError(
-                    f"Filter {name} not found. Available filters: 'jarvis'.")
+                    f"Filter {name} not found. Available filters: 'J04', 'tanh', 'M18'.")
 
     def expand_mask(self, radius_rad, vecs):
         """
@@ -255,9 +255,9 @@ class MassApertureMap(ABC):
         Main function to compute the healpix mass aperture map.
 
         r_theta_cut : float
-            Aperture radius in units of the pixel size (e.g. r_theta_cut=3 means an aperture radius of 3 times the pixel size).
+            Aperture radius cut in units of the pixel size. Note that the aperture radius cut should be large enough (typically 5 times than the aperture radius).
         filter : str or callable, optional
-            Mass aperture filter to apply. Can be a string corresponding to a implemented filter (e.g. 'jarvis') or a callable function taking one argument r (distance to the center of the aperture in units of the pixel size). Defaults to 'jarvis'.
+            Mass aperture filter to apply. Can be a string corresponding to a implemented filter ('J04', 'tanh', 'M18') or a callable function taking one argument r (distance to the center of the aperture in units of the pixel size). Defaults to 'J04'. Keep in mind that defining the filter with a string will use a default radius for the filter.
         shear_catalog : ShearCatalog, optional
             Shear catalog containing the galaxy shear data to be used for the mass aperture computation. Required if the mass aperture implementation needs to query the shear values of individual galaxies (e.g. FullCatMassAperture). Not required if the mass aperture implementation uses pixelised shear values (e.g. PixelMassAperture) and the pixelisation has already been done. Defaults to None.
         SUM : bool, optional

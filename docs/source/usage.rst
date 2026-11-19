@@ -25,18 +25,36 @@ You can load a galaxy catalogue from a FITS file using the `ShearCatalog` class.
    shear_catalog = ShearCatalog(data, columns=columns, gamma2_sign=1)
 
 
+Mass aperture radius configuration
+##################################
+
+The mass aperture radius is defined in arcminutes and is converted to pixels using the HEALPix resolution corresponding to the chosen nside. The mass aperture radius cut defines the extend where the mass aperture is computed. The mass aperture radius `r_theta` and  its cut `r_theta_cut` are defined in pixels.
+
+.. code-block:: python
+
+   nside = 4096
+   psize = hp.nside2resol(nside, arcmin=True)
+   r_theta_arcmin = 4  # en arcmin
+   r_theta = r_theta_arcmin/psize
+   r_theta_cut = 5 * r_theta
+
+
+
 Mass aperture implementations
 #############################
 
 Four different implementations of the mass aperture computation are available, each with its own advantages and trade-offs in terms of precision and computation time. The following examples demonstrate how to use each implementation.
+
+After the mass apeture is instanciated, a filter needs to be defined ("J04", "tanh", "M18"). The filter is defined by its name and the mass aperture radius in pixels. The filter is given to the mass aperture when calling the :meth:`get_mass_aperture <smart.MassAperture.MassAperture.MassApertureMap.get_mass_aperture>` method.
 
 Galaxy position-based (brute force)
 ***********************************
 
 .. code-block:: python
 
-   mass_aperture = FullCatMassAperture(nside=2048, verbosity=2)
-   mapE, mapB, mask = mass_aperture.get_mass_aperture(r_theta_cut=3, shear_catalog=shear_catalog, return_noise=False)
+   mass_aperture = FullCatMassAperture(nside=nside, verbosity=2)
+   jarvis_theta = mass_aperture.get_filter_by_name("J04", theta=theta_pix)
+   mapE, mapB, mask = mass_aperture.get_mass_aperture(r_theta_cut=r_theta_cut, filter=jarvis_theta,shear_catalog=shear_catalog, return_noise=False)
 
 
 Pixel-based (HEALPix centres)
@@ -44,8 +62,9 @@ Pixel-based (HEALPix centres)
 
 .. code-block:: python
 
-   mass_aperture = PixelMassAperture(nside=2048, verbosity=2)
-   mapE, mapB, mask = mass_aperture.get_mass_aperture(r_theta_cut=3, shear_catalog=shear_catalog, return_noise=False)
+   mass_aperture = PixelMassAperture(nside=nside, verbosity=2)
+   jarvis_theta = mass_aperture.get_filter_by_name("J04", theta=theta_pix)
+   mapE, mapB, mask = mass_aperture.get_mass_aperture(r_theta_cut=r_theta_cut, filter=jarvis_theta, shear_catalog=shear_catalog, return_noise=False)
 
 
 Pixel-based (galaxy position barycentres)
@@ -53,8 +72,9 @@ Pixel-based (galaxy position barycentres)
 
 .. code-block:: python
 
-   mass_aperture = PixelMassAperture(nside=2048, verbosity=2)
-   mapE, mapB, mask = mass_aperture.get_mass_aperture(r_theta_cut=3, shear_catalog=shear_catalog, return_noise=False, barycenters=True)
+   mass_aperture = PixelMassAperture(nside=nside, verbosity=2)
+   jarvis_theta = mass_aperture.get_filter_by_name("J04", theta=theta_pix)
+   mapE, mapB, mask = mass_aperture.get_mass_aperture(r_theta_cut=r_theta_cut, filter=jarvis_theta, shear_catalog=shear_catalog, return_noise=False, barycenters=True)
 
 
 Galaxy position-based (HEALPix catalogue partitioning)
@@ -62,8 +82,9 @@ Galaxy position-based (HEALPix catalogue partitioning)
 
 .. code-block:: python
 
-   mass_aperture = BinCatMassAperture(nside=2048, verbosity=2)
-   mapE, mapB, mask = mass_aperture.get_mass_aperture(r_theta_cut=3, shear_catalog=shear_catalog, return_noise=False)
+   mass_aperture = BinCatMassAperture(nside=nside, verbosity=2)
+   jarvis_theta = mass_aperture.get_filter_by_name("J04", theta=theta_pix)
+   mapE, mapB, mask = mass_aperture.get_mass_aperture(r_theta_cut=r_theta_cut, filter=jarvis_theta, shear_catalog=shear_catalog, return_noise=False)
 
 
 SUM vs MEAN approach
@@ -75,7 +96,7 @@ By default, the MEAN approach is used. To use the SUM approach, you can set the 
 
 .. code-block:: python
 
-   mapE, mapB, mask = mass_aperture.get_mass_aperture(r_theta_cut=3, shear_catalog=shear_catalog, return_noise=False, SUM=True)
+   mapE, mapB, mask = mass_aperture.get_mass_aperture(r_theta_cut=r_theta_cut, filter=jarvis_theta, shear_catalog=shear_catalog, return_noise=False, SUM=True)
 
 
 Returning the noise map
@@ -85,4 +106,4 @@ The noise map can be returned by setting the ``return_noise`` parameter to ``Tru
 
 .. code-block:: python
 
-   mapE, mapB, map_vnoise, mask = mass_aperture.get_mass_aperture(r_theta_cut=3, shear_catalog=shear_catalog, return_noise=True)
+   mapE, mapB, map_vnoise, mask = mass_aperture.get_mass_aperture(r_theta_cut=r_theta_cut, filter=jarvis_theta, shear_catalog=shear_catalog, return_noise=True)
