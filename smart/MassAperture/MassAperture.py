@@ -179,6 +179,10 @@ class MassApertureMap(ABC):
 
         # Aperture mass filter
         Q = filter(r)
+
+        # Remove galaxies overlapping the center to avoid singularities
+        Q[r == 0] = 0
+
         mapE_i = np.sum(gamma_t * Q)/avg_weight
         mapB_i = np.sum(gamma_x * Q)/avg_weight
         if not self._squares:

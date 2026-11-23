@@ -103,8 +103,9 @@ class BinCatMassAperture(MassApertureMap):
             weights_j = neighbor_data[:, 4]
             # the aperture size is mesured in non-empty pixels
             apr_size_pix = np.sum(neighbor_lenghts > 0)
-            avg_weight = np.sum(weights_j) / apr_size_pix
-            
+            if apr_size_pix > 0:
+                avg_weight = np.sum(weights_j) / apr_size_pix
+
         center = (ra[i], dec[i])
         return center, ra_j, dec_j, gamma1_j, gamma2_j, gamma1_j_sq, gamma2_j_sq, avg_weight
 
